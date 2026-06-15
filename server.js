@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.get("/", (req, res) => {
+  res.send("LexPostHealth backend is running");
+});
+
 app.get("/rg-test", async (req, res) => {
   try {
     const response = await fetch("https://www.resmigazete.gov.tr");
@@ -17,4 +21,14 @@ app.get("/rg-test", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message, name: err.name });
   }
+});
+
+app.get("/my-ip", async (req, res) => {
+  const response = await fetch("https://api.ipify.org?format=json");
+  const data = await response.json();
+  res.json(data);
+});
+
+app.listen(PORT, () => {
+  console.log(`LexPostHealth listening on port ${PORT}`);
 });
