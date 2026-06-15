@@ -29,6 +29,41 @@ app.get("/my-ip", async (req, res) => {
   res.json(data);
 });
 
+// Sadece resmigazete.gov.tr için proxy. SSRF koruması için host whitelist.
+app.get("/proxy", async (req, res) => {
+  try {
+    const target = req.query.url;
+    if (!target) return res.status(400).json({ error: "url query param required" });
+
+    let parsed;
+    try { parsed = new URL(target); }
+    catch { return res.status(400).json({ error: "invalid url" }); }
+
+    if (parsed.hostname !== "www.resmigazete.gov.tr" &&
+        parsed.hostname !== "resmigazete.gov.tr") {
+      return res.status(403).json({ error: "host not allowed" });
+    }
+
+    const response = await fetch(target, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7"
+      }
+    });
+
+    res.status(response.status);
+    const ct = response.headers.get("content-type");
+    if (ct) res.set("Content-Type", ct);
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: err.message, name: err.name });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`LexPostHealth listening on port ${PORT}`);
 });
