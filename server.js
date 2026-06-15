@@ -18,4 +18,3 @@ app.get("/rg-test", async (req, res) => {
     res.status(500).json({ error: err.message, name: err.name });
   }
 });
-
